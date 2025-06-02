@@ -1,0 +1,99 @@
+version: "3"
+
+services:
+  db-ms-products:
+    image: postgres:15
+    container_name: postgres_db_ms_product
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: msproduct
+      POSTGRES_PASSWORD: mypassword
+      POSTGRES_DB: productsms
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata-products:/var/lib/postgresql/data
+
+  db-ms-auth:
+    image: postgres:15
+    container_name: postgres_db_ms_auth
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: msauth
+      POSTGRES_PASSWORD: mypassword
+      POSTGRES_DB: authdb
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata-auth:/var/lib/postgresql/data
+
+  db-ms-orders:
+    image: postgres:15
+    container_name: postgres_db_ms_orders
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: msorders
+      POSTGRES_PASSWORD: mypassword
+      POSTGRES_DB: ordersdb
+    ports:
+      - "5434:5432"
+    volumes:
+      - pgdata-orders:/var/lib/postgresql/data
+
+  nats-server:
+    image: nats:latest
+    ports:
+      - "8222:8222"
+
+  client-gateway:
+    build: ./client-gateway
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./client-gateway/src:/usr/src/app/src
+    command: npm run start:dev
+    environment:
+      - PORT=3000
+      - NATS_SERVERS=nats://nats-server:4222
+
+  product-ms:
+    depends_on: 
+      - db-ms-products
+    build: ./ms-products
+    volumes:
+      - ./ms-products/src:/usr/src/app/src
+    command: npm run start:dev
+    environment:
+      - PORT=3001
+      - NATS_SERVERS=nats://nats-server:4222
+      - DATABASE_URL=postgresql://msproduct:mypassword@db-ms-products:5432/productsms
+
+  orders-ms:
+    depends_on:
+      - db-ms-orders
+    build: ./ms-orders
+    volumes:
+      - ./ms-orders/src:/usr/src/app/src
+    command: npm run start:dev
+    environment:
+      - PORT=3002
+      - NATS_SERVERS=nats://nats-server:4222
+      - DATABASE_URL=postgresql://msorders:mypassword@db-ms-orders:5432/ordersdb
+
+  auth-ms:
+    depends_on:
+      - db-ms-auth
+    build: ./ms-auth
+    volumes:
+      - ./ms-auth/src:/usr/src/app/src
+    command: npm run start:dev
+    environment:
+      - PORT=3004
+      - NATS_SERVERS=nats://nats-server:4222
+      - JWT_SECRET=secret
+      - DATABASE_URL=postgresql://msauth:mypassword@db-ms-auth:5432/authdb
+
+volumes:
+  pgdata-products:
+  pgdata-auth:
+  pgdata-orders:
