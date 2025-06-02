@@ -1,3 +1,12 @@
 [submodule "client-gateway"]
 	path = client-gateway
 	url = https://github.com/CrissVargasUAGRM/client-gateway.git
+[submodule "ms-auth"]
+	path = ms-auth
+	url = https://github.com/CrissVargasUAGRM/ms-auth.git
+[submodule "ms-orders"]
+	path = ms-orders
+	url = https://github.com/CrissVargasUAGRM/ms-orders.git
+[submodule "ms-products"]
+	path = ms-products
+	url = https://github.com/CrissVargasUAGRM/ms-product.git
